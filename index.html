@@ -99,6 +99,16 @@
             margin-bottom: 8px;
         }
 
+        .place-input select {
+            margin-bottom: 8px;
+        }
+
+        .place-input input.time-input {
+            padding: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
         .place-input.gold label { color: #ffd700; }
         .place-input.silver label { color: #c0c0c0; }
         .place-input.bronze label { color: #cd7f32; }
@@ -170,10 +180,19 @@
             font-size: 0.85rem;
         }
 
-        .racer-avg {
-            font-size: 1.3rem;
+        .racer-times {
+            text-align: right;
+        }
+
+        .racer-avg-time {
+            font-size: 1.1rem;
             font-weight: bold;
             color: #4ade80;
+        }
+
+        .racer-best-time {
+            font-size: 0.8rem;
+            color: #888;
         }
 
         /* Race History */
@@ -205,15 +224,21 @@
 
         .race-results {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 6px;
             font-size: 0.9rem;
-            flex-wrap: wrap;
         }
 
         .race-place {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+        }
+
+        .race-place .time {
+            color: #4ade80;
+            font-weight: bold;
+            margin-left: auto;
         }
 
         .medal {
@@ -377,6 +402,28 @@
             max-height: 300px;
             overflow-y: auto;
         }
+
+        /* Sort options */
+        .sort-options {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .sort-btn {
+            padding: 6px 10px;
+            border: none;
+            background: #16213e;
+            color: #888;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .sort-btn.active {
+            background: #e94560;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -409,19 +456,22 @@
         </div>
 
         <div class="form-group">
-            <label>Top 3 Finishers</label>
+            <label>Top 3 Finishers (with times)</label>
             <div class="place-inputs">
                 <div class="place-input gold">
                     <label>🥇 1st</label>
                     <select id="place1"></select>
+                    <input type="text" id="time1" class="time-input" placeholder="0.000" inputmode="decimal">
                 </div>
                 <div class="place-input silver">
                     <label>🥈 2nd</label>
                     <select id="place2"></select>
+                    <input type="text" id="time2" class="time-input" placeholder="0.000" inputmode="decimal">
                 </div>
                 <div class="place-input bronze">
                     <label>🥉 3rd</label>
                     <select id="place3"></select>
+                    <input type="text" id="time3" class="time-input" placeholder="0.000" inputmode="decimal">
                 </div>
             </div>
         </div>
@@ -432,6 +482,11 @@
     <!-- Leaderboard Panel -->
     <div id="leaderboard" class="panel">
         <div class="quick-stats" id="quickStats"></div>
+        <div class="sort-options">
+            <button class="sort-btn active" data-sort="points">By Points</button>
+            <button class="sort-btn" data-sort="avgTime">By Avg Time</button>
+            <button class="sort-btn" data-sort="bestTime">By Best Time</button>
+        </div>
         <div id="leaderboardList"></div>
     </div>
 
@@ -472,15 +527,23 @@
         // State - racers is now an array of {number, name} objects
         let state = {
             racers: [],  // [{number: 1, name: ''}, {number: 2, name: 'Joe'}, ...]
-            races: [],
+            races: [],   // [{id, race, track, places: [carNum], times: [time]}]
             myCar: null  // car number (not display name)
         };
+
+        let currentSort = 'points';
 
         // Get display name for a car
         function getDisplayName(carNum) {
             const racer = state.racers.find(r => r.number === carNum);
             if (!racer) return `#${carNum}`;
             return racer.name ? `${racer.number} - ${racer.name}` : `#${racer.number}`;
+        }
+
+        // Format time for display
+        function formatTime(time) {
+            if (!time && time !== 0) return '--';
+            return parseFloat(time).toFixed(3) + 's';
         }
 
         // Load state from localStorage
@@ -490,14 +553,14 @@
                 const parsed = JSON.parse(saved);
                 // Migration: if old format (racers as strings), convert
                 if (parsed.racers && parsed.racers.length > 0 && typeof parsed.racers[0] === 'string') {
-                    // Old format - convert to new
-                    state = {
-                        racers: [],
-                        races: [],
-                        myCar: null
-                    };
+                    state = { racers: [], races: [], myCar: null };
                 } else {
                     state = parsed;
+                    // Ensure times array exists on old races
+                    state.races = state.races.map(r => ({
+                        ...r,
+                        times: r.times || []
+                    }));
                 }
             } else {
                 // Initialize with dummy data
@@ -511,11 +574,11 @@
                         { number: 58, name: 'Joe' }
                     ],
                     races: [
-                        { id: 1, race: 1, track: 1, places: [7, 58, 1] },
-                        { id: 2, race: 1, track: 2, places: [2, 3, 12] },
-                        { id: 3, race: 2, track: 1, places: [58, 7, 3] },
-                        { id: 4, race: 2, track: 2, places: [1, 12, 2] },
-                        { id: 5, race: 3, track: 3, places: [7, 2, 58] },
+                        { id: 1, race: 1, track: 1, places: [7, 58, 1], times: [2.451, 2.523, 2.687] },
+                        { id: 2, race: 1, track: 2, places: [2, 3, 12], times: [2.512, 2.601, 2.789] },
+                        { id: 3, race: 2, track: 1, places: [58, 7, 3], times: [2.489, 2.501, 2.634] },
+                        { id: 4, race: 2, track: 2, places: [1, 12, 2], times: [2.567, 2.612, 2.698] },
+                        { id: 5, race: 3, track: 3, places: [7, 2, 58], times: [2.423, 2.478, 2.534] },
                     ],
                     myCar: 58
                 };
@@ -539,6 +602,16 @@
             });
         });
 
+        // Sort switching
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSort = btn.dataset.sort;
+                renderLeaderboard();
+            });
+        });
+
         // Generate range of car numbers
         function generateRange() {
             const start = parseInt(document.getElementById('rangeStart').value) || 1;
@@ -554,14 +627,12 @@
                 return;
             }
 
-            // Add cars that don't already exist
             for (let i = start; i <= end; i++) {
                 if (!state.racers.find(r => r.number === i)) {
                     state.racers.push({ number: i, name: '' });
                 }
             }
 
-            // Sort by number
             state.racers.sort((a, b) => a.number - b.number);
             saveState();
             renderAll();
@@ -581,7 +652,6 @@
                 });
             });
 
-            // My car select
             const myCarSelect = document.getElementById('myCarSelect');
             myCarSelect.innerHTML = '<option value="">-- Select your car --</option>';
             sortedRacers.forEach(racer => {
@@ -598,21 +668,37 @@
             const place1 = document.getElementById('place1').value;
             const place2 = document.getElementById('place2').value;
             const place3 = document.getElementById('place3').value;
+            const time1 = document.getElementById('time1').value;
+            const time2 = document.getElementById('time2').value;
+            const time3 = document.getElementById('time3').value;
 
             if (!place1 && !place2 && !place3) {
                 alert('Please select at least one finisher');
                 return;
             }
 
-            const places = [place1, place2, place3]
-                .filter(p => p)
-                .map(p => parseInt(p));
+            const places = [];
+            const times = [];
+
+            if (place1) {
+                places.push(parseInt(place1));
+                times.push(time1 ? parseFloat(time1) : null);
+            }
+            if (place2) {
+                places.push(parseInt(place2));
+                times.push(time2 ? parseFloat(time2) : null);
+            }
+            if (place3) {
+                places.push(parseInt(place3));
+                times.push(time3 ? parseFloat(time3) : null);
+            }
 
             state.races.push({
                 id: Date.now(),
                 race,
                 track,
-                places
+                places,
+                times
             });
 
             saveState();
@@ -622,6 +708,9 @@
             document.getElementById('place1').value = '';
             document.getElementById('place2').value = '';
             document.getElementById('place3').value = '';
+            document.getElementById('time1').value = '';
+            document.getElementById('time2').value = '';
+            document.getElementById('time3').value = '';
 
             alert('Race logged!');
         }
@@ -639,7 +728,8 @@
                     races: 0,
                     firsts: 0,
                     seconds: 0,
-                    thirds: 0
+                    thirds: 0,
+                    times: []
                 };
             });
 
@@ -657,17 +747,39 @@
                             stats[carNum].points += 1;
                             stats[carNum].thirds++;
                         }
+                        // Track times
+                        if (race.times && race.times[idx] != null) {
+                            stats[carNum].times.push(race.times[idx]);
+                        }
                     }
                 });
             });
 
-            return Object.values(stats)
-                .filter(s => s.races > 0)  // Only show cars that have raced
-                .map(s => ({
-                    ...s,
-                    avg: s.races > 0 ? (s.points / s.races).toFixed(2) : '0.00'
-                }))
-                .sort((a, b) => b.points - a.points || parseFloat(b.avg) - parseFloat(a.avg));
+            let leaderboard = Object.values(stats)
+                .filter(s => s.races > 0)
+                .map(s => {
+                    const validTimes = s.times.filter(t => t != null);
+                    return {
+                        ...s,
+                        avgTime: validTimes.length > 0
+                            ? validTimes.reduce((a, b) => a + b, 0) / validTimes.length
+                            : null,
+                        bestTime: validTimes.length > 0
+                            ? Math.min(...validTimes)
+                            : null
+                    };
+                });
+
+            // Sort based on current sort mode
+            if (currentSort === 'points') {
+                leaderboard.sort((a, b) => b.points - a.points || (a.avgTime || 999) - (b.avgTime || 999));
+            } else if (currentSort === 'avgTime') {
+                leaderboard.sort((a, b) => (a.avgTime || 999) - (b.avgTime || 999));
+            } else if (currentSort === 'bestTime') {
+                leaderboard.sort((a, b) => (a.bestTime || 999) - (b.bestTime || 999));
+            }
+
+            return leaderboard;
         }
 
         // Render leaderboard
@@ -678,7 +790,19 @@
             // Quick stats
             const quickStats = document.getElementById('quickStats');
             const totalRaces = state.races.length;
-            const leader = leaderboard[0];
+
+            // Find fastest time overall
+            let fastestTime = null;
+            state.races.forEach(race => {
+                if (race.times) {
+                    race.times.forEach(t => {
+                        if (t != null && (fastestTime === null || t < fastestTime)) {
+                            fastestTime = t;
+                        }
+                    });
+                }
+            });
+
             quickStats.innerHTML = `
                 <div class="stat-box">
                     <div class="stat-value">${totalRaces}</div>
@@ -689,8 +813,8 @@
                     <div class="stat-label">Cars</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">${leader ? leader.points : 0}</div>
-                    <div class="stat-label">Top Points</div>
+                    <div class="stat-value">${fastestTime ? fastestTime.toFixed(3) : '--'}</div>
+                    <div class="stat-label">Fastest Time</div>
                 </div>
             `;
 
@@ -712,7 +836,10 @@
                                 🥇${racer.firsts} 🥈${racer.seconds} 🥉${racer.thirds}
                             </div>
                         </div>
-                        <div class="racer-avg">${racer.avg}</div>
+                        <div class="racer-times">
+                            <div class="racer-avg-time">${racer.avgTime ? racer.avgTime.toFixed(3) + 's' : '--'}</div>
+                            <div class="racer-best-time">best: ${racer.bestTime ? racer.bestTime.toFixed(3) + 's' : '--'}</div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -723,7 +850,6 @@
             const container = document.getElementById('historyList');
             const filterContainer = document.getElementById('trackFilter');
 
-            // Track filter
             filterContainer.innerHTML = `
                 <button class="track-btn active" data-track="all">All</button>
                 ${[1,2,3,4,5,6].map(t =>
@@ -763,9 +889,24 @@
                         <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
                     </div>
                     <div class="race-results">
-                        ${race.places[0] ? `<span class="race-place"><span class="medal">🥇</span> ${getDisplayName(race.places[0])}</span>` : ''}
-                        ${race.places[1] ? `<span class="race-place"><span class="medal">🥈</span> ${getDisplayName(race.places[1])}</span>` : ''}
-                        ${race.places[2] ? `<span class="race-place"><span class="medal">🥉</span> ${getDisplayName(race.places[2])}</span>` : ''}
+                        ${race.places[0] != null ? `
+                            <span class="race-place">
+                                <span class="medal">🥇</span>
+                                ${getDisplayName(race.places[0])}
+                                <span class="time">${formatTime(race.times?.[0])}</span>
+                            </span>` : ''}
+                        ${race.places[1] != null ? `
+                            <span class="race-place">
+                                <span class="medal">🥈</span>
+                                ${getDisplayName(race.places[1])}
+                                <span class="time">${formatTime(race.times?.[1])}</span>
+                            </span>` : ''}
+                        ${race.places[2] != null ? `
+                            <span class="race-place">
+                                <span class="medal">🥉</span>
+                                ${getDisplayName(race.places[2])}
+                                <span class="time">${formatTime(race.times?.[2])}</span>
+                            </span>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -815,7 +956,6 @@
 
         // Delete racer
         function deleteRacer(carNum) {
-            const racer = state.racers.find(r => r.number === carNum);
             const display = getDisplayName(carNum);
             if (confirm(`Delete ${display}? This won't remove them from past races.`)) {
                 state.racers = state.racers.filter(r => r.number !== carNum);
@@ -883,7 +1023,6 @@
             renderHistory();
             renderRacers();
 
-            // Update race number to next
             if (state.races.length > 0) {
                 const maxRace = Math.max(...state.races.map(r => r.race));
                 document.getElementById('raceNumber').value = maxRace + 1;
