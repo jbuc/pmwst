@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Pinewood Derby Logger</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -57,7 +58,6 @@
             display: block;
         }
 
-        /* Log Race Panel */
         .form-group {
             margin-bottom: 15px;
         }
@@ -84,7 +84,6 @@
             border-color: #e94560;
         }
 
-        /* Lane inputs */
         .lanes-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -120,6 +119,14 @@
             border: 2px solid #4ade80;
         }
 
+        .lane-input.has-racer {
+            border: 2px solid #60a5fa;
+        }
+
+        .lane-input.has-time.has-racer {
+            border: 2px solid #4ade80;
+        }
+
         .btn {
             width: 100%;
             padding: 15px;
@@ -146,7 +153,11 @@
             color: white;
         }
 
-        /* Leaderboard */
+        .btn-scan {
+            background: #8b5cf6;
+            color: white;
+        }
+
         .leaderboard-item {
             background: #16213e;
             border-radius: 8px;
@@ -202,7 +213,6 @@
             color: #888;
         }
 
-        /* Race History */
         .race-item {
             background: #16213e;
             border-radius: 8px;
@@ -220,13 +230,6 @@
         .race-number {
             font-weight: bold;
             color: #e94560;
-        }
-
-        .race-track {
-            background: #0f0f23;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
         }
 
         .race-results {
@@ -266,7 +269,6 @@
             padding: 5px;
         }
 
-        /* Racers Panel */
         .racer-row {
             display: flex;
             align-items: center;
@@ -318,14 +320,12 @@
             margin-top: 0;
         }
 
-        /* Empty state */
         .empty {
             text-align: center;
             color: #666;
             padding: 40px;
         }
 
-        /* Track filter */
         .track-filter {
             display: flex;
             flex-wrap: wrap;
@@ -348,7 +348,6 @@
             color: white;
         }
 
-        /* My car highlight */
         .my-car {
             border-left: 3px solid #ffd700;
         }
@@ -357,7 +356,6 @@
             color: #ffd700;
         }
 
-        /* Quick stats */
         .quick-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -383,7 +381,6 @@
             color: #888;
         }
 
-        /* Data actions */
         .data-actions {
             margin-top: 20px;
             padding-top: 20px;
@@ -404,18 +401,11 @@
             border-top: 1px solid #333;
         }
 
-        .section-title:first-child {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
-
         .racer-list-scroll {
             max-height: 300px;
             overflow-y: auto;
         }
 
-        /* Sort options */
         .sort-options {
             display: flex;
             flex-wrap: wrap;
@@ -438,7 +428,6 @@
             color: white;
         }
 
-        /* Clear lanes button */
         .btn-clear {
             background: #333;
             color: #888;
@@ -454,6 +443,71 @@
         .inline-btns .btn {
             flex: 1;
         }
+
+        /* OCR styles */
+        .scan-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+        }
+
+        .scan-section label {
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+
+        .scan-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .scan-btns .btn {
+            margin-top: 0;
+        }
+
+        #scanStatus {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        #scanStatus.loading {
+            display: block;
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        #scanStatus.success {
+            display: block;
+            background: #14532d;
+            color: #4ade80;
+        }
+
+        #scanStatus.error {
+            display: block;
+            background: #450a0a;
+            color: #f87171;
+        }
+
+        .ocr-preview {
+            margin-top: 10px;
+            max-height: 150px;
+            overflow: hidden;
+            border-radius: 5px;
+        }
+
+        .ocr-preview img {
+            width: 100%;
+            object-fit: contain;
+        }
+
+        #cameraInput {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -468,6 +522,21 @@
 
     <!-- Log Race Panel -->
     <div id="log" class="panel active">
+        <div class="scan-section">
+            <label>📷 Scan Scoreboard Photo</label>
+            <p style="color: #888; font-size: 0.8rem; margin-top: 5px;">
+                Take a photo of the race results screen to auto-fill lanes and times
+            </p>
+            <div class="scan-btns">
+                <button class="btn btn-scan" onclick="capturePhoto()">📸 Take Photo</button>
+                <button class="btn btn-secondary" onclick="uploadPhoto()">📁 Upload</button>
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+            <div id="scanStatus"></div>
+            <div class="ocr-preview" id="ocrPreview"></div>
+        </div>
+
         <div class="form-group">
             <label>Race Number</label>
             <input type="number" id="raceNumber" min="1" value="1">
@@ -540,6 +609,7 @@
 
         let currentSort = 'points';
         let historyFilter = 'all';
+        let ocrWorker = null;
 
         // Get display name for a car
         function getDisplayName(carNum) {
@@ -570,7 +640,6 @@
                     }));
                 }
             } else {
-                // Initialize with dummy data
                 state = {
                     racers: [
                         { number: 1, name: '' },
@@ -593,7 +662,6 @@
             }
         }
 
-        // Save state to localStorage
         function saveState() {
             localStorage.setItem('pinewoodDerby', JSON.stringify(state));
         }
@@ -619,7 +687,211 @@
             }
         });
 
-        // Render lane inputs
+        // ========== OCR FUNCTIONS ==========
+
+        function capturePhoto() {
+            document.getElementById('cameraInput').click();
+        }
+
+        function uploadPhoto() {
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('cameraInput').addEventListener('change', handleImageSelect);
+        document.getElementById('fileInput').addEventListener('change', handleImageSelect);
+
+        async function handleImageSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('scanStatus');
+            const preview = document.getElementById('ocrPreview');
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Scan preview">`;
+            };
+            reader.readAsDataURL(file);
+
+            // Start OCR
+            status.className = 'loading';
+            status.textContent = 'Initializing OCR...';
+            status.style.display = 'block';
+
+            try {
+                status.textContent = 'Processing image... (this may take a moment)';
+
+                const result = await Tesseract.recognize(file, 'eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            status.textContent = `Scanning... ${pct}%`;
+                        }
+                    }
+                });
+
+                const text = result.data.text;
+                console.log('OCR Result:', text);
+
+                const parsed = parseOCRText(text);
+
+                if (parsed.lanes.length > 0) {
+                    applyParsedData(parsed);
+                    status.className = 'success';
+                    status.textContent = `Found ${parsed.lanes.length} lane(s) with data!`;
+                } else {
+                    status.className = 'error';
+                    status.textContent = 'Could not parse race data. Try a clearer photo.';
+                }
+            } catch (err) {
+                console.error('OCR Error:', err);
+                status.className = 'error';
+                status.textContent = 'OCR failed: ' + err.message;
+            }
+
+            // Clear the input so same file can be selected again
+            e.target.value = '';
+        }
+
+        function parseOCRText(text) {
+            const result = {
+                lanes: [],
+                heatNumber: null
+            };
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            console.log('Lines:', lines);
+
+            // Try to find heat/race number
+            for (const line of lines) {
+                const heatMatch = line.match(/Heat[:\s]*(\d+)/i) || line.match(/Race[:\s]*(\d+)/i);
+                if (heatMatch) {
+                    result.heatNumber = parseInt(heatMatch[1]);
+                }
+            }
+
+            // Look for lane data patterns
+            // Pattern 1: "Lane Car# Racer Place Time" table format
+            // Pattern 2: Just "1 20 Luke Meahl" etc.
+            // Pattern 3: Results with "1 Connor Price 44 2.451" (place, name, car#, time)
+
+            for (const line of lines) {
+                // Skip header lines
+                if (/^Lane\s+Car/i.test(line) || /Place\s+Time/i.test(line)) continue;
+
+                // Try pattern: lane car# name [place] [time]
+                // e.g., "1 20 Luke Meahl" or "1 20 Luke Meahl 1 2.451"
+                let match = line.match(/^(\d)\s+(\d+)\s+([A-Za-z][A-Za-z\s]+?)(?:\s+(\d)\s+(\d+\.\d+))?$/);
+                if (match) {
+                    const laneData = {
+                        lane: parseInt(match[1]),
+                        carNum: parseInt(match[2]),
+                        name: match[3].trim(),
+                        time: match[5] ? parseFloat(match[5]) : null
+                    };
+                    if (laneData.lane >= 1 && laneData.lane <= 6) {
+                        result.lanes.push(laneData);
+                        continue;
+                    }
+                }
+
+                // Try pattern: place name car# time (results format)
+                // e.g., "1 Connor Price 44 2.512"
+                match = line.match(/^(\d)\s+([A-Za-z][A-Za-z\s]+?)\s+(\d+)\s+(\d+\.\d+)/);
+                if (match) {
+                    result.lanes.push({
+                        lane: parseInt(match[1]), // Using place as lane for now
+                        carNum: parseInt(match[3]),
+                        name: match[2].trim(),
+                        time: parseFloat(match[4])
+                    });
+                    continue;
+                }
+
+                // Simple pattern: just numbers that might be car# time pairs
+                // e.g., "20 2.451"
+                match = line.match(/^(\d+)\s+(\d+\.\d{2,3})$/);
+                if (match) {
+                    const carNum = parseInt(match[1]);
+                    const time = parseFloat(match[2]);
+                    // Check if this car exists
+                    if (state.racers.find(r => r.number === carNum)) {
+                        result.lanes.push({
+                            lane: result.lanes.length + 1,
+                            carNum,
+                            time
+                        });
+                    }
+                }
+            }
+
+            // Deduplicate by lane number
+            const seenLanes = new Set();
+            result.lanes = result.lanes.filter(l => {
+                if (seenLanes.has(l.lane)) return false;
+                seenLanes.add(l.lane);
+                return true;
+            });
+
+            return result;
+        }
+
+        function applyParsedData(parsed) {
+            // First clear existing lanes
+            clearLanes();
+
+            // Apply parsed data to lane inputs
+            for (const laneData of parsed.lanes) {
+                if (laneData.lane < 1 || laneData.lane > NUM_LANES) continue;
+
+                const racerSelect = document.getElementById(`lane${laneData.lane}Racer`);
+                const timeInput = document.getElementById(`lane${laneData.lane}Time`);
+                const container = document.getElementById(`lane${laneData.lane}Container`);
+
+                // Try to find matching car by number
+                if (laneData.carNum) {
+                    // Check if car exists, if not and we have a name, add it
+                    let racer = state.racers.find(r => r.number === laneData.carNum);
+                    if (!racer && laneData.name) {
+                        state.racers.push({ number: laneData.carNum, name: laneData.name });
+                        state.racers.sort((a, b) => a.number - b.number);
+                        saveState();
+                        renderLaneInputs(); // Re-render to include new car
+                    } else if (racer && laneData.name && !racer.name) {
+                        // Update name if we didn't have one
+                        racer.name = laneData.name;
+                        saveState();
+                    }
+
+                    // Now set the value
+                    const selectEl = document.getElementById(`lane${laneData.lane}Racer`);
+                    if (selectEl) {
+                        selectEl.value = laneData.carNum;
+                        document.getElementById(`lane${laneData.lane}Container`).classList.add('has-racer');
+                    }
+                }
+
+                // Set time if available
+                if (laneData.time) {
+                    const timeEl = document.getElementById(`lane${laneData.lane}Time`);
+                    if (timeEl) {
+                        timeEl.value = laneData.time.toFixed(3);
+                        updateLaneHighlight(laneData.lane);
+                    }
+                }
+            }
+
+            // Update heat number if found
+            if (parsed.heatNumber) {
+                document.getElementById('raceNumber').value = parsed.heatNumber;
+            }
+
+            renderAll();
+        }
+
+        // ========== END OCR FUNCTIONS ==========
+
         function renderLaneInputs() {
             const grid = document.getElementById('lanesGrid');
             const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
@@ -629,7 +901,7 @@
                 html += `
                     <div class="lane-input" id="lane${i}Container">
                         <div class="lane-header">Lane ${i}</div>
-                        <select id="lane${i}Racer">
+                        <select id="lane${i}Racer" onchange="updateLaneRacerHighlight(${i})">
                             <option value="">-- Empty --</option>
                             ${sortedRacers.map(r => {
                                 const display = r.name ? `${r.number} - ${r.name}` : `#${r.number}`;
@@ -644,7 +916,6 @@
             grid.innerHTML = html;
         }
 
-        // Update lane highlight when time is entered
         function updateLaneHighlight(lane) {
             const container = document.getElementById(`lane${lane}Container`);
             const time = document.getElementById(`lane${lane}Time`).value;
@@ -655,16 +926,26 @@
             }
         }
 
-        // Clear all lanes
+        function updateLaneRacerHighlight(lane) {
+            const container = document.getElementById(`lane${lane}Container`);
+            const racer = document.getElementById(`lane${lane}Racer`).value;
+            if (racer) {
+                container.classList.add('has-racer');
+            } else {
+                container.classList.remove('has-racer');
+            }
+        }
+
         function clearLanes() {
             for (let i = 1; i <= NUM_LANES; i++) {
                 document.getElementById(`lane${i}Racer`).value = '';
                 document.getElementById(`lane${i}Time`).value = '';
-                document.getElementById(`lane${i}Container`).classList.remove('has-time');
+                document.getElementById(`lane${i}Container`).classList.remove('has-time', 'has-racer');
             }
+            document.getElementById('scanStatus').style.display = 'none';
+            document.getElementById('ocrPreview').innerHTML = '';
         }
 
-        // Generate range of car numbers
         function generateRange() {
             const start = parseInt(document.getElementById('rangeStart').value) || 1;
             const end = parseInt(document.getElementById('rangeEnd').value) || 75;
@@ -690,7 +971,6 @@
             renderAll();
         }
 
-        // Populate racer dropdowns
         function populateRacerSelects() {
             const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
 
@@ -703,11 +983,9 @@
             });
         }
 
-        // Log a race
         function logRace() {
             const raceNum = parseInt(document.getElementById('raceNumber').value);
 
-            // Collect lane data
             const laneData = [];
             for (let i = 1; i <= NUM_LANES; i++) {
                 const racer = document.getElementById(`lane${i}Racer`).value;
@@ -726,10 +1004,8 @@
                 return;
             }
 
-            // Sort by time to determine placements
             laneData.sort((a, b) => a.time - b.time);
 
-            // Extract sorted data
             const places = laneData.map(d => d.racer);
             const times = laneData.map(d => d.time);
             const lanes = laneData.map(d => d.lane);
@@ -744,7 +1020,6 @@
 
             saveState();
 
-            // Auto-increment race number and clear lanes
             document.getElementById('raceNumber').value = raceNum + 1;
             clearLanes();
 
@@ -752,7 +1027,6 @@
             renderAll();
         }
 
-        // Calculate leaderboard
         function getLeaderboard() {
             const stats = {};
 
@@ -797,9 +1071,8 @@
                     const validTimes = s.times.filter(t => t != null);
                     let avgDropWorst = null;
                     if (validTimes.length > 1) {
-                        // Drop the slowest (highest) time
                         const sorted = [...validTimes].sort((a, b) => a - b);
-                        sorted.pop(); // Remove slowest
+                        sorted.pop();
                         avgDropWorst = sorted.reduce((a, b) => a + b, 0) / sorted.length;
                     } else if (validTimes.length === 1) {
                         avgDropWorst = validTimes[0];
@@ -817,7 +1090,6 @@
                     };
                 });
 
-            // Sort based on current sort mode
             if (currentSort === 'points') {
                 leaderboard.sort((a, b) => b.points - a.points || (a.avgTime || 999) - (b.avgTime || 999));
             } else if (currentSort === 'avgTime') {
@@ -831,7 +1103,6 @@
             return leaderboard;
         }
 
-        // Render leaderboard
         function renderLeaderboard() {
             const leaderboard = getLeaderboard();
             const container = document.getElementById('leaderboardList');
@@ -895,12 +1166,10 @@
             }).join('');
         }
 
-        // Render history
         function renderHistory() {
             const container = document.getElementById('historyList');
             const filterContainer = document.getElementById('trackFilter');
 
-            // Build filter options
             filterContainer.innerHTML = `
                 <button class="track-btn ${historyFilter === 'all' ? 'active' : ''}" data-filter="all">All</button>
                 <button class="track-btn ${historyFilter === 'mine' ? 'active' : ''}" data-filter="mine">My Races</button>
@@ -922,7 +1191,6 @@
             const container = document.getElementById('historyList');
             let races = [...state.races].reverse();
 
-            // Filter for my races
             if (historyFilter === 'mine' && state.myCar) {
                 races = races.filter(r => r.places.includes(state.myCar));
             }
@@ -966,7 +1234,6 @@
             }).join('');
         }
 
-        // Delete race
         function deleteRace(id) {
             if (confirm('Delete this race?')) {
                 state.races = state.races.filter(r => r.id !== id);
@@ -975,7 +1242,6 @@
             }
         }
 
-        // Render racers
         function renderRacers() {
             const container = document.getElementById('racersList');
 
@@ -998,7 +1264,6 @@
             `).join('');
         }
 
-        // Update racer name
         function updateRacerName(carNum, name) {
             const racer = state.racers.find(r => r.number === carNum);
             if (racer) {
@@ -1008,7 +1273,6 @@
             }
         }
 
-        // Delete racer
         function deleteRacer(carNum) {
             const display = getDisplayName(carNum);
             if (confirm(`Delete ${display}? This won't remove them from past races.`)) {
@@ -1019,7 +1283,6 @@
             }
         }
 
-        // Set my car
         function setMyCar() {
             const val = document.getElementById('myCarSelect').value;
             state.myCar = val ? parseInt(val) : null;
@@ -1027,7 +1290,6 @@
             renderAll();
         }
 
-        // Export data
         function exportData() {
             const data = JSON.stringify(state, null, 2);
             const blob = new Blob([data], { type: 'application/json' });
@@ -1038,7 +1300,6 @@
             a.click();
         }
 
-        // Import data
         function importData() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -1061,7 +1322,6 @@
             input.click();
         }
 
-        // Clear all data
         function clearAllData() {
             if (confirm('Clear ALL data? This cannot be undone!')) {
                 state = { racers: [], races: [], myCar: null };
@@ -1070,7 +1330,6 @@
             }
         }
 
-        // Render all
         function renderAll() {
             renderLaneInputs();
             populateRacerSelects();
@@ -1084,7 +1343,6 @@
             }
         }
 
-        // Initialize
         loadState();
         renderAll();
     </script>
