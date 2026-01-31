@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pinewood Derby Logger</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #16213e;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #e94560;
+            color: white;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Log Race Panel */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #16213e;
+            border-radius: 8px;
+            background: #0f0f23;
+            color: white;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .place-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .place-input {
+            text-align: center;
+        }
+
+        .place-input label {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .place-input.gold label { color: #ffd700; }
+        .place-input.silver label { color: #c0c0c0; }
+        .place-input.bronze label { color: #cd7f32; }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #16213e;
+            color: #aaa;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        /* Leaderboard */
+        .leaderboard-item {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .rank-1 { background: #ffd700; color: #000; }
+        .rank-2 { background: #c0c0c0; color: #000; }
+        .rank-3 { background: #cd7f32; color: #000; }
+        .rank-other { background: #333; color: #888; }
+
+        .racer-info {
+            flex: 1;
+        }
+
+        .racer-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .racer-stats {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .racer-avg {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        /* Race History */
+        .race-item {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .race-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .race-number {
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .race-track {
+            background: #0f0f23;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .race-results {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .race-place {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .medal {
+            font-size: 1.1rem;
+        }
+
+        .delete-race {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        /* Racers Panel */
+        .racer-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #16213e;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 0.9rem;
+        }
+
+        .racer-chip button {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .add-racer {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-racer input {
+            flex: 1;
+        }
+
+        .add-racer button {
+            padding: 12px 20px;
+            white-space: nowrap;
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        /* Track filter */
+        .track-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .track-btn {
+            padding: 8px 12px;
+            border: none;
+            background: #16213e;
+            color: #888;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .track-btn.active {
+            background: #e94560;
+            color: white;
+        }
+
+        /* My car highlight */
+        .my-car {
+            border-left: 3px solid #ffd700;
+        }
+
+        .star {
+            color: #ffd700;
+        }
+
+        /* Quick stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* Data actions */
+        .data-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .data-actions h3 {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏎️ Pinewood Derby</h1>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="log">Log Race</button>
+        <button class="tab" data-tab="leaderboard">Leaders</button>
+        <button class="tab" data-tab="history">History</button>
+        <button class="tab" data-tab="racers">Racers</button>
+    </div>
+
+    <!-- Log Race Panel -->
+    <div id="log" class="panel active">
+        <div class="form-group">
+            <label>Race Number</label>
+            <input type="number" id="raceNumber" min="1" value="1">
+        </div>
+
+        <div class="form-group">
+            <label>Track</label>
+            <select id="trackSelect">
+                <option value="1">Track 1</option>
+                <option value="2">Track 2</option>
+                <option value="3">Track 3</option>
+                <option value="4">Track 4</option>
+                <option value="5">Track 5</option>
+                <option value="6">Track 6</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Top 3 Finishers</label>
+            <div class="place-inputs">
+                <div class="place-input gold">
+                    <label>🥇 1st</label>
+                    <select id="place1"></select>
+                </div>
+                <div class="place-input silver">
+                    <label>🥈 2nd</label>
+                    <select id="place2"></select>
+                </div>
+                <div class="place-input bronze">
+                    <label>🥉 3rd</label>
+                    <select id="place3"></select>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="logRace()">Log Race</button>
+    </div>
+
+    <!-- Leaderboard Panel -->
+    <div id="leaderboard" class="panel">
+        <div class="quick-stats" id="quickStats"></div>
+        <div id="leaderboardList"></div>
+    </div>
+
+    <!-- History Panel -->
+    <div id="history" class="panel">
+        <div class="track-filter" id="trackFilter"></div>
+        <div id="historyList"></div>
+    </div>
+
+    <!-- Racers Panel -->
+    <div id="racers" class="panel">
+        <div class="add-racer">
+            <input type="text" id="newRacerName" placeholder="Racer name">
+            <button class="btn btn-primary" onclick="addRacer()">Add</button>
+        </div>
+
+        <div class="form-group">
+            <label>My Car (starred in leaderboard)</label>
+            <select id="myCarSelect" onchange="setMyCar()">
+                <option value="">-- Select your car --</option>
+            </select>
+        </div>
+
+        <label>All Racers</label>
+        <div id="racersList"></div>
+
+        <div class="data-actions">
+            <h3>Data Management</h3>
+            <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+            <button class="btn btn-secondary" onclick="importData()">Import Data</button>
+            <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            racers: [],
+            races: [],
+            myCar: null
+        };
+
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem('pinewoodDerby');
+            if (saved) {
+                state = JSON.parse(saved);
+            } else {
+                // Initialize with dummy data
+                state = {
+                    racers: ['Speed Demon', 'Lightning Bolt', 'Red Rocket', 'Blue Streak', 'Thunder', 'Flash'],
+                    races: [
+                        { id: 1, race: 1, track: 1, places: ['Speed Demon', 'Lightning Bolt', 'Red Rocket'] },
+                        { id: 2, race: 1, track: 2, places: ['Blue Streak', 'Thunder', 'Flash'] },
+                        { id: 3, race: 2, track: 1, places: ['Lightning Bolt', 'Speed Demon', 'Thunder'] },
+                        { id: 4, race: 2, track: 2, places: ['Red Rocket', 'Flash', 'Blue Streak'] },
+                        { id: 5, race: 3, track: 3, places: ['Speed Demon', 'Blue Streak', 'Lightning Bolt'] },
+                    ],
+                    myCar: 'Speed Demon'
+                };
+                saveState();
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('pinewoodDerby', JSON.stringify(state));
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+                renderAll();
+            });
+        });
+
+        // Populate racer dropdowns
+        function populateRacerSelects() {
+            const selects = ['place1', 'place2', 'place3'];
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">--</option>';
+                state.racers.forEach(racer => {
+                    select.innerHTML += `<option value="${racer}">${racer}</option>`;
+                });
+            });
+
+            // My car select
+            const myCarSelect = document.getElementById('myCarSelect');
+            myCarSelect.innerHTML = '<option value="">-- Select your car --</option>';
+            state.racers.forEach(racer => {
+                myCarSelect.innerHTML += `<option value="${racer}" ${racer === state.myCar ? 'selected' : ''}>${racer}</option>`;
+            });
+        }
+
+        // Log a race
+        function logRace() {
+            const race = parseInt(document.getElementById('raceNumber').value);
+            const track = parseInt(document.getElementById('trackSelect').value);
+            const place1 = document.getElementById('place1').value;
+            const place2 = document.getElementById('place2').value;
+            const place3 = document.getElementById('place3').value;
+
+            if (!place1 && !place2 && !place3) {
+                alert('Please select at least one finisher');
+                return;
+            }
+
+            const places = [place1, place2, place3].filter(p => p);
+
+            state.races.push({
+                id: Date.now(),
+                race,
+                track,
+                places
+            });
+
+            saveState();
+
+            // Auto-increment race number
+            document.getElementById('raceNumber').value = race + 1;
+            document.getElementById('place1').value = '';
+            document.getElementById('place2').value = '';
+            document.getElementById('place3').value = '';
+
+            alert('Race logged!');
+        }
+
+        // Calculate leaderboard
+        function getLeaderboard() {
+            const stats = {};
+
+            state.racers.forEach(racer => {
+                stats[racer] = {
+                    name: racer,
+                    points: 0,
+                    races: 0,
+                    firsts: 0,
+                    seconds: 0,
+                    thirds: 0
+                };
+            });
+
+            state.races.forEach(race => {
+                race.places.forEach((racer, idx) => {
+                    if (racer && stats[racer]) {
+                        stats[racer].races++;
+                        if (idx === 0) {
+                            stats[racer].points += 3;
+                            stats[racer].firsts++;
+                        } else if (idx === 1) {
+                            stats[racer].points += 2;
+                            stats[racer].seconds++;
+                        } else if (idx === 2) {
+                            stats[racer].points += 1;
+                            stats[racer].thirds++;
+                        }
+                    }
+                });
+            });
+
+            return Object.values(stats)
+                .map(s => ({
+                    ...s,
+                    avg: s.races > 0 ? (s.points / s.races).toFixed(2) : '0.00'
+                }))
+                .sort((a, b) => b.points - a.points || parseFloat(b.avg) - parseFloat(a.avg));
+        }
+
+        // Render leaderboard
+        function renderLeaderboard() {
+            const leaderboard = getLeaderboard();
+            const container = document.getElementById('leaderboardList');
+
+            // Quick stats
+            const quickStats = document.getElementById('quickStats');
+            const totalRaces = state.races.length;
+            const leader = leaderboard[0];
+            quickStats.innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-value">${totalRaces}</div>
+                    <div class="stat-label">Total Races</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${state.racers.length}</div>
+                    <div class="stat-label">Racers</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${leader ? leader.points : 0}</div>
+                    <div class="stat-label">Top Points</div>
+                </div>
+            `;
+
+            if (leaderboard.length === 0) {
+                container.innerHTML = '<div class="empty">No racers yet</div>';
+                return;
+            }
+
+            container.innerHTML = leaderboard.map((racer, idx) => {
+                const rankClass = idx < 3 ? `rank-${idx + 1}` : 'rank-other';
+                const isMyCar = racer.name === state.myCar;
+                return `
+                    <div class="leaderboard-item ${isMyCar ? 'my-car' : ''}">
+                        <div class="rank ${rankClass}">${idx + 1}</div>
+                        <div class="racer-info">
+                            <div class="racer-name">${isMyCar ? '<span class="star">★</span> ' : ''}${racer.name}</div>
+                            <div class="racer-stats">
+                                ${racer.points} pts · ${racer.races} races ·
+                                🥇${racer.firsts} 🥈${racer.seconds} 🥉${racer.thirds}
+                            </div>
+                        </div>
+                        <div class="racer-avg">${racer.avg}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render history
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            const filterContainer = document.getElementById('trackFilter');
+
+            // Track filter
+            filterContainer.innerHTML = `
+                <button class="track-btn active" data-track="all">All</button>
+                ${[1,2,3,4,5,6].map(t =>
+                    `<button class="track-btn" data-track="${t}">T${t}</button>`
+                ).join('')}
+            `;
+
+            filterContainer.querySelectorAll('.track-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterContainer.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderRaces(btn.dataset.track);
+                });
+            });
+
+            renderRaces('all');
+        }
+
+        function renderRaces(trackFilter) {
+            const container = document.getElementById('historyList');
+            let races = [...state.races].reverse();
+
+            if (trackFilter !== 'all') {
+                races = races.filter(r => r.track === parseInt(trackFilter));
+            }
+
+            if (races.length === 0) {
+                container.innerHTML = '<div class="empty">No races logged yet</div>';
+                return;
+            }
+
+            container.innerHTML = races.map(race => `
+                <div class="race-item">
+                    <div class="race-header">
+                        <span class="race-number">Race #${race.race}</span>
+                        <span class="race-track">Track ${race.track}</span>
+                        <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
+                    </div>
+                    <div class="race-results">
+                        ${race.places[0] ? `<span class="race-place"><span class="medal">🥇</span> ${race.places[0]}</span>` : ''}
+                        ${race.places[1] ? `<span class="race-place"><span class="medal">🥈</span> ${race.places[1]}</span>` : ''}
+                        ${race.places[2] ? `<span class="race-place"><span class="medal">🥉</span> ${race.places[2]}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Delete race
+        function deleteRace(id) {
+            if (confirm('Delete this race?')) {
+                state.races = state.races.filter(r => r.id !== id);
+                saveState();
+                renderHistory();
+            }
+        }
+
+        // Render racers
+        function renderRacers() {
+            const container = document.getElementById('racersList');
+
+            if (state.racers.length === 0) {
+                container.innerHTML = '<div class="empty">No racers yet. Add some above!</div>';
+                return;
+            }
+
+            container.innerHTML = state.racers.map(racer => `
+                <span class="racer-chip">
+                    ${racer === state.myCar ? '<span class="star">★</span>' : ''}
+                    ${racer}
+                    <button onclick="deleteRacer('${racer.replace(/'/g, "\\'")}')">×</button>
+                </span>
+            `).join('');
+        }
+
+        // Add racer
+        function addRacer() {
+            const input = document.getElementById('newRacerName');
+            const name = input.value.trim();
+
+            if (!name) return;
+            if (state.racers.includes(name)) {
+                alert('Racer already exists!');
+                return;
+            }
+
+            state.racers.push(name);
+            saveState();
+            input.value = '';
+            renderAll();
+        }
+
+        // Delete racer
+        function deleteRacer(name) {
+            if (confirm(`Delete ${name}? This won't remove them from past races.`)) {
+                state.racers = state.racers.filter(r => r !== name);
+                if (state.myCar === name) state.myCar = null;
+                saveState();
+                renderAll();
+            }
+        }
+
+        // Set my car
+        function setMyCar() {
+            state.myCar = document.getElementById('myCarSelect').value || null;
+            saveState();
+            renderAll();
+        }
+
+        // Export data
+        function exportData() {
+            const data = JSON.stringify(state, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pinewood-derby-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        // Import data
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        state = JSON.parse(e.target.result);
+                        saveState();
+                        renderAll();
+                        alert('Data imported successfully!');
+                    } catch (err) {
+                        alert('Invalid file format');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Clear ALL data? This cannot be undone!')) {
+                state = { racers: [], races: [], myCar: null };
+                saveState();
+                renderAll();
+            }
+        }
+
+        // Render all
+        function renderAll() {
+            populateRacerSelects();
+            renderLeaderboard();
+            renderHistory();
+            renderRacers();
+
+            // Update race number to next
+            if (state.races.length > 0) {
+                const maxRace = Math.max(...state.races.map(r => r.race));
+                document.getElementById('raceNumber').value = maxRace + 1;
+            }
+        }
+
+        // Handle Enter key for adding racers
+        document.getElementById('newRacerName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRacer();
+        });
+
+        // Initialize
+        loadState();
+        renderAll();
+    </script>
+</body>
+</html>
