@@ -84,34 +84,41 @@
             border-color: #e94560;
         }
 
-        .place-inputs {
+        /* Lane inputs */
+        .lanes-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        .place-input {
-            text-align: center;
+        .lane-input {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 10px;
         }
 
-        .place-input label {
-            font-size: 1.2rem;
+        .lane-header {
+            font-weight: bold;
+            color: #e94560;
             margin-bottom: 8px;
+            font-size: 0.9rem;
         }
 
-        .place-input select {
+        .lane-input select {
             margin-bottom: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
         }
 
-        .place-input input.time-input {
-            padding: 8px;
+        .lane-input input {
+            padding: 10px;
             font-size: 0.9rem;
             text-align: center;
         }
 
-        .place-input.gold label { color: #ffd700; }
-        .place-input.silver label { color: #c0c0c0; }
-        .place-input.bronze label { color: #cd7f32; }
+        .lane-input.has-time {
+            border: 2px solid #4ade80;
+        }
 
         .btn {
             width: 100%;
@@ -239,6 +246,11 @@
             color: #4ade80;
             font-weight: bold;
             margin-left: auto;
+        }
+
+        .race-place .lane-num {
+            color: #888;
+            font-size: 0.8rem;
         }
 
         .medal {
@@ -406,6 +418,7 @@
         /* Sort options */
         .sort-options {
             display: flex;
+            flex-wrap: wrap;
             gap: 5px;
             margin-bottom: 10px;
         }
@@ -423,6 +436,23 @@
         .sort-btn.active {
             background: #e94560;
             color: white;
+        }
+
+        /* Clear lanes button */
+        .btn-clear {
+            background: #333;
+            color: #888;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .inline-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inline-btns .btn {
+            flex: 1;
         }
     </style>
 </head>
@@ -444,47 +474,23 @@
         </div>
 
         <div class="form-group">
-            <label>Track</label>
-            <select id="trackSelect">
-                <option value="1">Track 1</option>
-                <option value="2">Track 2</option>
-                <option value="3">Track 3</option>
-                <option value="4">Track 4</option>
-                <option value="5">Track 5</option>
-                <option value="6">Track 6</option>
-            </select>
+            <label>Setup Lanes (select racers, then enter times after race)</label>
+            <div class="lanes-grid" id="lanesGrid"></div>
         </div>
 
-        <div class="form-group">
-            <label>Top 3 Finishers (with times)</label>
-            <div class="place-inputs">
-                <div class="place-input gold">
-                    <label>🥇 1st</label>
-                    <select id="place1"></select>
-                    <input type="text" id="time1" class="time-input" placeholder="0.000" inputmode="decimal">
-                </div>
-                <div class="place-input silver">
-                    <label>🥈 2nd</label>
-                    <select id="place2"></select>
-                    <input type="text" id="time2" class="time-input" placeholder="0.000" inputmode="decimal">
-                </div>
-                <div class="place-input bronze">
-                    <label>🥉 3rd</label>
-                    <select id="place3"></select>
-                    <input type="text" id="time3" class="time-input" placeholder="0.000" inputmode="decimal">
-                </div>
-            </div>
+        <div class="inline-btns">
+            <button class="btn btn-clear" onclick="clearLanes()">Clear Lanes</button>
+            <button class="btn btn-primary" onclick="logRace()">Log Race</button>
         </div>
-
-        <button class="btn btn-primary" onclick="logRace()">Log Race</button>
     </div>
 
     <!-- Leaderboard Panel -->
     <div id="leaderboard" class="panel">
         <div class="quick-stats" id="quickStats"></div>
-        <div class="sort-options">
+        <div class="sort-options" id="sortOptions">
             <button class="sort-btn active" data-sort="points">By Points</button>
             <button class="sort-btn" data-sort="avgTime">By Avg Time</button>
+            <button class="sort-btn" data-sort="avgDropWorst">Avg (drop worst)</button>
             <button class="sort-btn" data-sort="bestTime">By Best Time</button>
         </div>
         <div id="leaderboardList"></div>
@@ -524,14 +530,16 @@
     </div>
 
     <script>
-        // State - racers is now an array of {number, name} objects
+        const NUM_LANES = 6;
+
         let state = {
-            racers: [],  // [{number: 1, name: ''}, {number: 2, name: 'Joe'}, ...]
-            races: [],   // [{id, race, track, places: [carNum], times: [time]}]
-            myCar: null  // car number (not display name)
+            racers: [],
+            races: [],
+            myCar: null
         };
 
         let currentSort = 'points';
+        let historyFilter = 'all';
 
         // Get display name for a car
         function getDisplayName(carNum) {
@@ -551,15 +559,14 @@
             const saved = localStorage.getItem('pinewoodDerby');
             if (saved) {
                 const parsed = JSON.parse(saved);
-                // Migration: if old format (racers as strings), convert
                 if (parsed.racers && parsed.racers.length > 0 && typeof parsed.racers[0] === 'string') {
                     state = { racers: [], races: [], myCar: null };
                 } else {
                     state = parsed;
-                    // Ensure times array exists on old races
                     state.races = state.races.map(r => ({
                         ...r,
-                        times: r.times || []
+                        times: r.times || [],
+                        lanes: r.lanes || []
                     }));
                 }
             } else {
@@ -574,11 +581,11 @@
                         { number: 58, name: 'Joe' }
                     ],
                     races: [
-                        { id: 1, race: 1, track: 1, places: [7, 58, 1], times: [2.451, 2.523, 2.687] },
-                        { id: 2, race: 1, track: 2, places: [2, 3, 12], times: [2.512, 2.601, 2.789] },
-                        { id: 3, race: 2, track: 1, places: [58, 7, 3], times: [2.489, 2.501, 2.634] },
-                        { id: 4, race: 2, track: 2, places: [1, 12, 2], times: [2.567, 2.612, 2.698] },
-                        { id: 5, race: 3, track: 3, places: [7, 2, 58], times: [2.423, 2.478, 2.534] },
+                        { id: 1, race: 1, places: [7, 58, 1], times: [2.451, 2.523, 2.687], lanes: [1, 2, 3] },
+                        { id: 2, race: 2, places: [2, 3, 12], times: [2.512, 2.601, 2.789], lanes: [1, 2, 3] },
+                        { id: 3, race: 3, places: [58, 7, 3], times: [2.489, 2.501, 2.634], lanes: [4, 5, 6] },
+                        { id: 4, race: 4, places: [1, 12, 2], times: [2.567, 2.612, 2.698], lanes: [1, 2, 3] },
+                        { id: 5, race: 5, places: [7, 2, 58], times: [2.423, 2.478, 2.534], lanes: [2, 4, 6] },
                     ],
                     myCar: 58
                 };
@@ -603,14 +610,59 @@
         });
 
         // Sort switching
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        document.getElementById('sortOptions').addEventListener('click', (e) => {
+            if (e.target.classList.contains('sort-btn')) {
                 document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentSort = btn.dataset.sort;
+                e.target.classList.add('active');
+                currentSort = e.target.dataset.sort;
                 renderLeaderboard();
-            });
+            }
         });
+
+        // Render lane inputs
+        function renderLaneInputs() {
+            const grid = document.getElementById('lanesGrid');
+            const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
+
+            let html = '';
+            for (let i = 1; i <= NUM_LANES; i++) {
+                html += `
+                    <div class="lane-input" id="lane${i}Container">
+                        <div class="lane-header">Lane ${i}</div>
+                        <select id="lane${i}Racer">
+                            <option value="">-- Empty --</option>
+                            ${sortedRacers.map(r => {
+                                const display = r.name ? `${r.number} - ${r.name}` : `#${r.number}`;
+                                return `<option value="${r.number}">${display}</option>`;
+                            }).join('')}
+                        </select>
+                        <input type="text" id="lane${i}Time" placeholder="Time" inputmode="decimal"
+                               onchange="updateLaneHighlight(${i})">
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        // Update lane highlight when time is entered
+        function updateLaneHighlight(lane) {
+            const container = document.getElementById(`lane${lane}Container`);
+            const time = document.getElementById(`lane${lane}Time`).value;
+            if (time && parseFloat(time) > 0) {
+                container.classList.add('has-time');
+            } else {
+                container.classList.remove('has-time');
+            }
+        }
+
+        // Clear all lanes
+        function clearLanes() {
+            for (let i = 1; i <= NUM_LANES; i++) {
+                document.getElementById(`lane${i}Racer`).value = '';
+                document.getElementById(`lane${i}Time`).value = '';
+                document.getElementById(`lane${i}Container`).classList.remove('has-time');
+            }
+        }
 
         // Generate range of car numbers
         function generateRange() {
@@ -640,17 +692,7 @@
 
         // Populate racer dropdowns
         function populateRacerSelects() {
-            const selects = ['place1', 'place2', 'place3'];
             const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
-
-            selects.forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = '<option value="">--</option>';
-                sortedRacers.forEach(racer => {
-                    const display = racer.name ? `${racer.number} - ${racer.name}` : `#${racer.number}`;
-                    select.innerHTML += `<option value="${racer.number}">${display}</option>`;
-                });
-            });
 
             const myCarSelect = document.getElementById('myCarSelect');
             myCarSelect.innerHTML = '<option value="">-- Select your car --</option>';
@@ -663,56 +705,51 @@
 
         // Log a race
         function logRace() {
-            const race = parseInt(document.getElementById('raceNumber').value);
-            const track = parseInt(document.getElementById('trackSelect').value);
-            const place1 = document.getElementById('place1').value;
-            const place2 = document.getElementById('place2').value;
-            const place3 = document.getElementById('place3').value;
-            const time1 = document.getElementById('time1').value;
-            const time2 = document.getElementById('time2').value;
-            const time3 = document.getElementById('time3').value;
+            const raceNum = parseInt(document.getElementById('raceNumber').value);
 
-            if (!place1 && !place2 && !place3) {
-                alert('Please select at least one finisher');
+            // Collect lane data
+            const laneData = [];
+            for (let i = 1; i <= NUM_LANES; i++) {
+                const racer = document.getElementById(`lane${i}Racer`).value;
+                const time = document.getElementById(`lane${i}Time`).value;
+                if (racer && time && parseFloat(time) > 0) {
+                    laneData.push({
+                        lane: i,
+                        racer: parseInt(racer),
+                        time: parseFloat(time)
+                    });
+                }
+            }
+
+            if (laneData.length === 0) {
+                alert('Please enter at least one racer with a time');
                 return;
             }
 
-            const places = [];
-            const times = [];
+            // Sort by time to determine placements
+            laneData.sort((a, b) => a.time - b.time);
 
-            if (place1) {
-                places.push(parseInt(place1));
-                times.push(time1 ? parseFloat(time1) : null);
-            }
-            if (place2) {
-                places.push(parseInt(place2));
-                times.push(time2 ? parseFloat(time2) : null);
-            }
-            if (place3) {
-                places.push(parseInt(place3));
-                times.push(time3 ? parseFloat(time3) : null);
-            }
+            // Extract sorted data
+            const places = laneData.map(d => d.racer);
+            const times = laneData.map(d => d.time);
+            const lanes = laneData.map(d => d.lane);
 
             state.races.push({
                 id: Date.now(),
-                race,
-                track,
+                race: raceNum,
                 places,
-                times
+                times,
+                lanes
             });
 
             saveState();
 
-            // Auto-increment race number
-            document.getElementById('raceNumber').value = race + 1;
-            document.getElementById('place1').value = '';
-            document.getElementById('place2').value = '';
-            document.getElementById('place3').value = '';
-            document.getElementById('time1').value = '';
-            document.getElementById('time2').value = '';
-            document.getElementById('time3').value = '';
+            // Auto-increment race number and clear lanes
+            document.getElementById('raceNumber').value = raceNum + 1;
+            clearLanes();
 
-            alert('Race logged!');
+            alert(`Race logged! ${places.length} finishers recorded.`);
+            renderAll();
         }
 
         // Calculate leaderboard
@@ -747,7 +784,6 @@
                             stats[carNum].points += 1;
                             stats[carNum].thirds++;
                         }
-                        // Track times
                         if (race.times && race.times[idx] != null) {
                             stats[carNum].times.push(race.times[idx]);
                         }
@@ -759,6 +795,16 @@
                 .filter(s => s.races > 0)
                 .map(s => {
                     const validTimes = s.times.filter(t => t != null);
+                    let avgDropWorst = null;
+                    if (validTimes.length > 1) {
+                        // Drop the slowest (highest) time
+                        const sorted = [...validTimes].sort((a, b) => a - b);
+                        sorted.pop(); // Remove slowest
+                        avgDropWorst = sorted.reduce((a, b) => a + b, 0) / sorted.length;
+                    } else if (validTimes.length === 1) {
+                        avgDropWorst = validTimes[0];
+                    }
+
                     return {
                         ...s,
                         avgTime: validTimes.length > 0
@@ -766,7 +812,8 @@
                             : null,
                         bestTime: validTimes.length > 0
                             ? Math.min(...validTimes)
-                            : null
+                            : null,
+                        avgDropWorst
                     };
                 });
 
@@ -775,6 +822,8 @@
                 leaderboard.sort((a, b) => b.points - a.points || (a.avgTime || 999) - (b.avgTime || 999));
             } else if (currentSort === 'avgTime') {
                 leaderboard.sort((a, b) => (a.avgTime || 999) - (b.avgTime || 999));
+            } else if (currentSort === 'avgDropWorst') {
+                leaderboard.sort((a, b) => (a.avgDropWorst || 999) - (b.avgDropWorst || 999));
             } else if (currentSort === 'bestTime') {
                 leaderboard.sort((a, b) => (a.bestTime || 999) - (b.bestTime || 999));
             }
@@ -787,11 +836,9 @@
             const leaderboard = getLeaderboard();
             const container = document.getElementById('leaderboardList');
 
-            // Quick stats
             const quickStats = document.getElementById('quickStats');
             const totalRaces = state.races.length;
 
-            // Find fastest time overall
             let fastestTime = null;
             state.races.forEach(race => {
                 if (race.times) {
@@ -823,9 +870,12 @@
                 return;
             }
 
+            const showDropWorst = currentSort === 'avgDropWorst';
+
             container.innerHTML = leaderboard.map((racer, idx) => {
                 const rankClass = idx < 3 ? `rank-${idx + 1}` : 'rank-other';
                 const isMyCar = racer.number === state.myCar;
+                const displayTime = showDropWorst ? racer.avgDropWorst : racer.avgTime;
                 return `
                     <div class="leaderboard-item ${isMyCar ? 'my-car' : ''}">
                         <div class="rank ${rankClass}">${idx + 1}</div>
@@ -837,7 +887,7 @@
                             </div>
                         </div>
                         <div class="racer-times">
-                            <div class="racer-avg-time">${racer.avgTime ? racer.avgTime.toFixed(3) + 's' : '--'}</div>
+                            <div class="racer-avg-time">${displayTime ? displayTime.toFixed(3) + 's' : '--'}</div>
                             <div class="racer-best-time">best: ${racer.bestTime ? racer.bestTime.toFixed(3) + 's' : '--'}</div>
                         </div>
                     </div>
@@ -850,66 +900,70 @@
             const container = document.getElementById('historyList');
             const filterContainer = document.getElementById('trackFilter');
 
+            // Build filter options
             filterContainer.innerHTML = `
-                <button class="track-btn active" data-track="all">All</button>
-                ${[1,2,3,4,5,6].map(t =>
-                    `<button class="track-btn" data-track="${t}">T${t}</button>`
-                ).join('')}
+                <button class="track-btn ${historyFilter === 'all' ? 'active' : ''}" data-filter="all">All</button>
+                <button class="track-btn ${historyFilter === 'mine' ? 'active' : ''}" data-filter="mine">My Races</button>
             `;
 
             filterContainer.querySelectorAll('.track-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     filterContainer.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    renderRaces(btn.dataset.track);
+                    historyFilter = btn.dataset.filter;
+                    renderRaces();
                 });
             });
 
-            renderRaces('all');
+            renderRaces();
         }
 
-        function renderRaces(trackFilter) {
+        function renderRaces() {
             const container = document.getElementById('historyList');
             let races = [...state.races].reverse();
 
-            if (trackFilter !== 'all') {
-                races = races.filter(r => r.track === parseInt(trackFilter));
+            // Filter for my races
+            if (historyFilter === 'mine' && state.myCar) {
+                races = races.filter(r => r.places.includes(state.myCar));
             }
 
             if (races.length === 0) {
-                container.innerHTML = '<div class="empty">No races logged yet</div>';
+                if (historyFilter === 'mine') {
+                    container.innerHTML = '<div class="empty">No races found for your car</div>';
+                } else {
+                    container.innerHTML = '<div class="empty">No races logged yet</div>';
+                }
                 return;
             }
 
-            container.innerHTML = races.map(race => `
-                <div class="race-item">
-                    <div class="race-header">
-                        <span class="race-number">Race #${race.race}</span>
-                        <span class="race-track">Track ${race.track}</span>
-                        <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
+            container.innerHTML = races.map(race => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const resultsHtml = race.places.map((carNum, idx) => {
+                    const medal = medals[idx] || `${idx + 1}.`;
+                    const lane = race.lanes ? race.lanes[idx] : null;
+                    const isMyCar = carNum === state.myCar;
+                    return `
+                        <span class="race-place ${isMyCar ? 'my-car' : ''}">
+                            <span class="medal">${medal}</span>
+                            ${getDisplayName(carNum)}
+                            ${lane ? `<span class="lane-num">(L${lane})</span>` : ''}
+                            <span class="time">${formatTime(race.times?.[idx])}</span>
+                        </span>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="race-item">
+                        <div class="race-header">
+                            <span class="race-number">Race #${race.race}</span>
+                            <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
+                        </div>
+                        <div class="race-results">
+                            ${resultsHtml}
+                        </div>
                     </div>
-                    <div class="race-results">
-                        ${race.places[0] != null ? `
-                            <span class="race-place">
-                                <span class="medal">🥇</span>
-                                ${getDisplayName(race.places[0])}
-                                <span class="time">${formatTime(race.times?.[0])}</span>
-                            </span>` : ''}
-                        ${race.places[1] != null ? `
-                            <span class="race-place">
-                                <span class="medal">🥈</span>
-                                ${getDisplayName(race.places[1])}
-                                <span class="time">${formatTime(race.times?.[1])}</span>
-                            </span>` : ''}
-                        ${race.places[2] != null ? `
-                            <span class="race-place">
-                                <span class="medal">🥉</span>
-                                ${getDisplayName(race.places[2])}
-                                <span class="time">${formatTime(race.times?.[2])}</span>
-                            </span>` : ''}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Delete race
@@ -950,7 +1004,7 @@
             if (racer) {
                 racer.name = name.trim();
                 saveState();
-                populateRacerSelects();
+                renderAll();
             }
         }
 
@@ -1018,6 +1072,7 @@
 
         // Render all
         function renderAll() {
+            renderLaneInputs();
             populateRacerSelects();
             renderLeaderboard();
             renderHistory();
