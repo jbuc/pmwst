@@ -57,7 +57,6 @@
             display: block;
         }
 
-        /* Log Race Panel */
         .form-group {
             margin-bottom: 15px;
         }
@@ -84,24 +83,48 @@
             border-color: #e94560;
         }
 
-        .place-inputs {
+        .lanes-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        .place-input {
+        .lane-input {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .lane-header {
+            font-weight: bold;
+            color: #e94560;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .lane-input select {
+            margin-bottom: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .lane-input input {
+            padding: 10px;
+            font-size: 0.9rem;
             text-align: center;
         }
 
-        .place-input label {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
+        .lane-input.has-time {
+            border: 2px solid #4ade80;
         }
 
-        .place-input.gold label { color: #ffd700; }
-        .place-input.silver label { color: #c0c0c0; }
-        .place-input.bronze label { color: #cd7f32; }
+        .lane-input.has-racer {
+            border: 2px solid #60a5fa;
+        }
+
+        .lane-input.has-time.has-racer {
+            border: 2px solid #4ade80;
+        }
 
         .btn {
             width: 100%;
@@ -129,7 +152,6 @@
             color: white;
         }
 
-        /* Leaderboard */
         .leaderboard-item {
             background: #16213e;
             border-radius: 8px;
@@ -170,13 +192,21 @@
             font-size: 0.85rem;
         }
 
-        .racer-avg {
-            font-size: 1.3rem;
+        .racer-times {
+            text-align: right;
+        }
+
+        .racer-avg-time {
+            font-size: 1.1rem;
             font-weight: bold;
             color: #4ade80;
         }
 
-        /* Race History */
+        .racer-best-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
         .race-item {
             background: #16213e;
             border-radius: 8px;
@@ -196,23 +226,28 @@
             color: #e94560;
         }
 
-        .race-track {
-            background: #0f0f23;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-
         .race-results {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 6px;
             font-size: 0.9rem;
         }
 
         .race-place {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+        }
+
+        .race-place .time {
+            color: #4ade80;
+            font-weight: bold;
+            margin-left: auto;
+        }
+
+        .race-place .lane-num {
+            color: #888;
+            font-size: 0.8rem;
         }
 
         .medal {
@@ -228,49 +263,63 @@
             padding: 5px;
         }
 
-        /* Racers Panel */
-        .racer-chip {
-            display: inline-flex;
+        .racer-row {
+            display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             background: #16213e;
-            padding: 8px 12px;
-            border-radius: 20px;
-            margin: 4px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .racer-row.my-car {
+            border-left: 3px solid #ffd700;
+        }
+
+        .racer-num {
+            font-weight: bold;
+            color: #e94560;
+            min-width: 35px;
+        }
+
+        .racer-row input {
+            flex: 1;
+            padding: 8px;
             font-size: 0.9rem;
         }
 
-        .racer-chip button {
+        .racer-row button {
             background: none;
             border: none;
             color: #ff4444;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            padding: 5px;
         }
 
-        .add-racer {
+        .range-inputs {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
 
-        .add-racer input {
+        .range-inputs input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .range-inputs .btn {
             flex: 1;
+            margin-top: 0;
         }
 
-        .add-racer button {
-            padding: 12px 20px;
-            white-space: nowrap;
-        }
-
-        /* Empty state */
         .empty {
             text-align: center;
             color: #666;
             padding: 40px;
         }
 
-        /* Track filter */
         .track-filter {
             display: flex;
             flex-wrap: wrap;
@@ -293,7 +342,6 @@
             color: white;
         }
 
-        /* My car highlight */
         .my-car {
             border-left: 3px solid #ffd700;
         }
@@ -302,7 +350,6 @@
             color: #ffd700;
         }
 
-        /* Quick stats */
         .quick-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -328,7 +375,6 @@
             color: #888;
         }
 
-        /* Data actions */
         .data-actions {
             margin-top: 20px;
             padding-top: 20px;
@@ -339,6 +385,57 @@
             color: #888;
             font-size: 0.9rem;
             margin-bottom: 10px;
+        }
+
+        .section-title {
+            color: #888;
+            font-size: 0.9rem;
+            margin: 20px 0 10px 0;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+
+        .racer-list-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .sort-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .sort-btn {
+            padding: 6px 10px;
+            border: none;
+            background: #16213e;
+            color: #888;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .sort-btn.active {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #333;
+            color: #888;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .inline-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inline-btns .btn {
+            flex: 1;
         }
     </style>
 </head>
@@ -360,41 +457,25 @@
         </div>
 
         <div class="form-group">
-            <label>Track</label>
-            <select id="trackSelect">
-                <option value="1">Track 1</option>
-                <option value="2">Track 2</option>
-                <option value="3">Track 3</option>
-                <option value="4">Track 4</option>
-                <option value="5">Track 5</option>
-                <option value="6">Track 6</option>
-            </select>
+            <label>Setup Lanes (select racers, then enter times after race)</label>
+            <div class="lanes-grid" id="lanesGrid"></div>
         </div>
 
-        <div class="form-group">
-            <label>Top 3 Finishers</label>
-            <div class="place-inputs">
-                <div class="place-input gold">
-                    <label>🥇 1st</label>
-                    <select id="place1"></select>
-                </div>
-                <div class="place-input silver">
-                    <label>🥈 2nd</label>
-                    <select id="place2"></select>
-                </div>
-                <div class="place-input bronze">
-                    <label>🥉 3rd</label>
-                    <select id="place3"></select>
-                </div>
-            </div>
+        <div class="inline-btns">
+            <button class="btn btn-clear" onclick="clearLanes()">Clear Lanes</button>
+            <button class="btn btn-primary" onclick="logRace()">Log Race</button>
         </div>
-
-        <button class="btn btn-primary" onclick="logRace()">Log Race</button>
     </div>
 
     <!-- Leaderboard Panel -->
     <div id="leaderboard" class="panel">
         <div class="quick-stats" id="quickStats"></div>
+        <div class="sort-options" id="sortOptions">
+            <button class="sort-btn active" data-sort="points">By Points</button>
+            <button class="sort-btn" data-sort="avgTime">By Avg Time</button>
+            <button class="sort-btn" data-sort="avgDropWorst">Avg (drop worst)</button>
+            <button class="sort-btn" data-sort="bestTime">By Best Time</button>
+        </div>
         <div id="leaderboardList"></div>
     </div>
 
@@ -406,20 +487,22 @@
 
     <!-- Racers Panel -->
     <div id="racers" class="panel">
-        <div class="add-racer">
-            <input type="text" id="newRacerName" placeholder="Racer name">
-            <button class="btn btn-primary" onclick="addRacer()">Add</button>
+        <h3 class="section-title" style="border-top: none; padding-top: 0; margin-top: 0;">Generate Car Numbers</h3>
+        <div class="range-inputs">
+            <input type="number" id="rangeStart" placeholder="From" min="1" value="1">
+            <input type="number" id="rangeEnd" placeholder="To" min="1" value="75">
+            <button class="btn btn-primary" onclick="generateRange()">Generate</button>
         </div>
 
+        <h3 class="section-title">My Car</h3>
         <div class="form-group">
-            <label>My Car (starred in leaderboard)</label>
             <select id="myCarSelect" onchange="setMyCar()">
                 <option value="">-- Select your car --</option>
             </select>
         </div>
 
-        <label>All Racers</label>
-        <div id="racersList"></div>
+        <h3 class="section-title">All Cars (tap to add name)</h3>
+        <div id="racersList" class="racer-list-scroll"></div>
 
         <div class="data-actions">
             <h3>Data Management</h3>
@@ -430,36 +513,68 @@
     </div>
 
     <script>
-        // State
+        const NUM_LANES = 6;
+
         let state = {
             racers: [],
             races: [],
             myCar: null
         };
 
+        let currentSort = 'points';
+        let historyFilter = 'all';
+
+        // Get display name for a car
+        function getDisplayName(carNum) {
+            const racer = state.racers.find(r => r.number === carNum);
+            if (!racer) return `#${carNum}`;
+            return racer.name ? `${racer.number} - ${racer.name}` : `#${racer.number}`;
+        }
+
+        // Format time for display
+        function formatTime(time) {
+            if (!time && time !== 0) return '--';
+            return parseFloat(time).toFixed(3) + 's';
+        }
+
         // Load state from localStorage
         function loadState() {
             const saved = localStorage.getItem('pinewoodDerby');
             if (saved) {
-                state = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                if (parsed.racers && parsed.racers.length > 0 && typeof parsed.racers[0] === 'string') {
+                    state = { racers: [], races: [], myCar: null };
+                } else {
+                    state = parsed;
+                    state.races = state.races.map(r => ({
+                        ...r,
+                        times: r.times || [],
+                        lanes: r.lanes || []
+                    }));
+                }
             } else {
-                // Initialize with dummy data
                 state = {
-                    racers: ['Speed Demon', 'Lightning Bolt', 'Red Rocket', 'Blue Streak', 'Thunder', 'Flash'],
-                    races: [
-                        { id: 1, race: 1, track: 1, places: ['Speed Demon', 'Lightning Bolt', 'Red Rocket'] },
-                        { id: 2, race: 1, track: 2, places: ['Blue Streak', 'Thunder', 'Flash'] },
-                        { id: 3, race: 2, track: 1, places: ['Lightning Bolt', 'Speed Demon', 'Thunder'] },
-                        { id: 4, race: 2, track: 2, places: ['Red Rocket', 'Flash', 'Blue Streak'] },
-                        { id: 5, race: 3, track: 3, places: ['Speed Demon', 'Blue Streak', 'Lightning Bolt'] },
+                    racers: [
+                        { number: 1, name: '' },
+                        { number: 2, name: '' },
+                        { number: 3, name: '' },
+                        { number: 7, name: 'Speed Demon' },
+                        { number: 12, name: '' },
+                        { number: 58, name: 'Joe' }
                     ],
-                    myCar: 'Speed Demon'
+                    races: [
+                        { id: 1, race: 1, places: [7, 58, 1], times: [2.451, 2.523, 2.687], lanes: [1, 2, 3] },
+                        { id: 2, race: 2, places: [2, 3, 12], times: [2.512, 2.601, 2.789], lanes: [1, 2, 3] },
+                        { id: 3, race: 3, places: [58, 7, 3], times: [2.489, 2.501, 2.634], lanes: [4, 5, 6] },
+                        { id: 4, race: 4, places: [1, 12, 2], times: [2.567, 2.612, 2.698], lanes: [1, 2, 3] },
+                        { id: 5, race: 5, places: [7, 2, 58], times: [2.423, 2.478, 2.534], lanes: [2, 4, 6] },
+                    ],
+                    myCar: 58
                 };
                 saveState();
             }
         }
 
-        // Save state to localStorage
         function saveState() {
             localStorage.setItem('pinewoodDerby', JSON.stringify(state));
         }
@@ -475,108 +590,243 @@
             });
         });
 
-        // Populate racer dropdowns
-        function populateRacerSelects() {
-            const selects = ['place1', 'place2', 'place3'];
-            selects.forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = '<option value="">--</option>';
-                state.racers.forEach(racer => {
-                    select.innerHTML += `<option value="${racer}">${racer}</option>`;
-                });
-            });
+        // Sort switching
+        document.getElementById('sortOptions').addEventListener('click', (e) => {
+            if (e.target.classList.contains('sort-btn')) {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentSort = e.target.dataset.sort;
+                renderLeaderboard();
+            }
+        });
 
-            // My car select
-            const myCarSelect = document.getElementById('myCarSelect');
-            myCarSelect.innerHTML = '<option value="">-- Select your car --</option>';
-            state.racers.forEach(racer => {
-                myCarSelect.innerHTML += `<option value="${racer}" ${racer === state.myCar ? 'selected' : ''}>${racer}</option>`;
-            });
+        function renderLaneInputs() {
+            const grid = document.getElementById('lanesGrid');
+            const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
+
+            let html = '';
+            for (let i = 1; i <= NUM_LANES; i++) {
+                html += `
+                    <div class="lane-input" id="lane${i}Container">
+                        <div class="lane-header">Lane ${i}</div>
+                        <select id="lane${i}Racer" onchange="updateLaneRacerHighlight(${i})">
+                            <option value="">-- Empty --</option>
+                            ${sortedRacers.map(r => {
+                                const display = r.name ? `${r.number} - ${r.name}` : `#${r.number}`;
+                                return `<option value="${r.number}">${display}</option>`;
+                            }).join('')}
+                        </select>
+                        <input type="text" id="lane${i}Time" placeholder="Time" inputmode="decimal"
+                               onchange="updateLaneHighlight(${i})">
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
         }
 
-        // Log a race
-        function logRace() {
-            const race = parseInt(document.getElementById('raceNumber').value);
-            const track = parseInt(document.getElementById('trackSelect').value);
-            const place1 = document.getElementById('place1').value;
-            const place2 = document.getElementById('place2').value;
-            const place3 = document.getElementById('place3').value;
+        function updateLaneHighlight(lane) {
+            const container = document.getElementById(`lane${lane}Container`);
+            const time = document.getElementById(`lane${lane}Time`).value;
+            if (time && parseFloat(time) > 0) {
+                container.classList.add('has-time');
+            } else {
+                container.classList.remove('has-time');
+            }
+        }
 
-            if (!place1 && !place2 && !place3) {
-                alert('Please select at least one finisher');
+        function updateLaneRacerHighlight(lane) {
+            const container = document.getElementById(`lane${lane}Container`);
+            const racer = document.getElementById(`lane${lane}Racer`).value;
+            if (racer) {
+                container.classList.add('has-racer');
+            } else {
+                container.classList.remove('has-racer');
+            }
+        }
+
+        function clearLanes() {
+            for (let i = 1; i <= NUM_LANES; i++) {
+                document.getElementById(`lane${i}Racer`).value = '';
+                document.getElementById(`lane${i}Time`).value = '';
+                document.getElementById(`lane${i}Container`).classList.remove('has-time', 'has-racer');
+            }
+        }
+
+        function generateRange() {
+            const start = parseInt(document.getElementById('rangeStart').value) || 1;
+            const end = parseInt(document.getElementById('rangeEnd').value) || 75;
+
+            if (start > end) {
+                alert('Start must be less than or equal to end');
                 return;
             }
 
-            const places = [place1, place2, place3].filter(p => p);
+            if (end - start > 200) {
+                alert('Maximum range is 200 cars');
+                return;
+            }
+
+            for (let i = start; i <= end; i++) {
+                if (!state.racers.find(r => r.number === i)) {
+                    state.racers.push({ number: i, name: '' });
+                }
+            }
+
+            state.racers.sort((a, b) => a.number - b.number);
+            saveState();
+            renderAll();
+        }
+
+        function populateRacerSelects() {
+            const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
+
+            const myCarSelect = document.getElementById('myCarSelect');
+            myCarSelect.innerHTML = '<option value="">-- Select your car --</option>';
+            sortedRacers.forEach(racer => {
+                const display = racer.name ? `${racer.number} - ${racer.name}` : `#${racer.number}`;
+                const selected = racer.number === state.myCar ? 'selected' : '';
+                myCarSelect.innerHTML += `<option value="${racer.number}" ${selected}>${display}</option>`;
+            });
+        }
+
+        function logRace() {
+            const raceNum = parseInt(document.getElementById('raceNumber').value);
+
+            const laneData = [];
+            for (let i = 1; i <= NUM_LANES; i++) {
+                const racer = document.getElementById(`lane${i}Racer`).value;
+                const time = document.getElementById(`lane${i}Time`).value;
+                if (racer && time && parseFloat(time) > 0) {
+                    laneData.push({
+                        lane: i,
+                        racer: parseInt(racer),
+                        time: parseFloat(time)
+                    });
+                }
+            }
+
+            if (laneData.length === 0) {
+                alert('Please enter at least one racer with a time');
+                return;
+            }
+
+            laneData.sort((a, b) => a.time - b.time);
+
+            const places = laneData.map(d => d.racer);
+            const times = laneData.map(d => d.time);
+            const lanes = laneData.map(d => d.lane);
 
             state.races.push({
                 id: Date.now(),
-                race,
-                track,
-                places
+                race: raceNum,
+                places,
+                times,
+                lanes
             });
 
             saveState();
 
-            // Auto-increment race number
-            document.getElementById('raceNumber').value = race + 1;
-            document.getElementById('place1').value = '';
-            document.getElementById('place2').value = '';
-            document.getElementById('place3').value = '';
+            document.getElementById('raceNumber').value = raceNum + 1;
+            clearLanes();
 
-            alert('Race logged!');
+            alert(`Race logged! ${places.length} finishers recorded.`);
+            renderAll();
         }
 
-        // Calculate leaderboard
         function getLeaderboard() {
             const stats = {};
 
             state.racers.forEach(racer => {
-                stats[racer] = {
-                    name: racer,
+                stats[racer.number] = {
+                    number: racer.number,
+                    name: racer.name,
+                    displayName: getDisplayName(racer.number),
                     points: 0,
                     races: 0,
                     firsts: 0,
                     seconds: 0,
-                    thirds: 0
+                    thirds: 0,
+                    times: []
                 };
             });
 
             state.races.forEach(race => {
-                race.places.forEach((racer, idx) => {
-                    if (racer && stats[racer]) {
-                        stats[racer].races++;
+                race.places.forEach((carNum, idx) => {
+                    if (carNum && stats[carNum]) {
+                        stats[carNum].races++;
                         if (idx === 0) {
-                            stats[racer].points += 3;
-                            stats[racer].firsts++;
+                            stats[carNum].points += 3;
+                            stats[carNum].firsts++;
                         } else if (idx === 1) {
-                            stats[racer].points += 2;
-                            stats[racer].seconds++;
+                            stats[carNum].points += 2;
+                            stats[carNum].seconds++;
                         } else if (idx === 2) {
-                            stats[racer].points += 1;
-                            stats[racer].thirds++;
+                            stats[carNum].points += 1;
+                            stats[carNum].thirds++;
+                        }
+                        if (race.times && race.times[idx] != null) {
+                            stats[carNum].times.push(race.times[idx]);
                         }
                     }
                 });
             });
 
-            return Object.values(stats)
-                .map(s => ({
-                    ...s,
-                    avg: s.races > 0 ? (s.points / s.races).toFixed(2) : '0.00'
-                }))
-                .sort((a, b) => b.points - a.points || parseFloat(b.avg) - parseFloat(a.avg));
+            let leaderboard = Object.values(stats)
+                .filter(s => s.races > 0)
+                .map(s => {
+                    const validTimes = s.times.filter(t => t != null);
+                    let avgDropWorst = null;
+                    if (validTimes.length > 1) {
+                        const sorted = [...validTimes].sort((a, b) => a - b);
+                        sorted.pop();
+                        avgDropWorst = sorted.reduce((a, b) => a + b, 0) / sorted.length;
+                    } else if (validTimes.length === 1) {
+                        avgDropWorst = validTimes[0];
+                    }
+
+                    return {
+                        ...s,
+                        avgTime: validTimes.length > 0
+                            ? validTimes.reduce((a, b) => a + b, 0) / validTimes.length
+                            : null,
+                        bestTime: validTimes.length > 0
+                            ? Math.min(...validTimes)
+                            : null,
+                        avgDropWorst
+                    };
+                });
+
+            if (currentSort === 'points') {
+                leaderboard.sort((a, b) => b.points - a.points || (a.avgTime || 999) - (b.avgTime || 999));
+            } else if (currentSort === 'avgTime') {
+                leaderboard.sort((a, b) => (a.avgTime || 999) - (b.avgTime || 999));
+            } else if (currentSort === 'avgDropWorst') {
+                leaderboard.sort((a, b) => (a.avgDropWorst || 999) - (b.avgDropWorst || 999));
+            } else if (currentSort === 'bestTime') {
+                leaderboard.sort((a, b) => (a.bestTime || 999) - (b.bestTime || 999));
+            }
+
+            return leaderboard;
         }
 
-        // Render leaderboard
         function renderLeaderboard() {
             const leaderboard = getLeaderboard();
             const container = document.getElementById('leaderboardList');
 
-            // Quick stats
             const quickStats = document.getElementById('quickStats');
             const totalRaces = state.races.length;
-            const leader = leaderboard[0];
+
+            let fastestTime = null;
+            state.races.forEach(race => {
+                if (race.times) {
+                    race.times.forEach(t => {
+                        if (t != null && (fastestTime === null || t < fastestTime)) {
+                            fastestTime = t;
+                        }
+                    });
+                }
+            });
+
             quickStats.innerHTML = `
                 <div class="stat-box">
                     <div class="stat-value">${totalRaces}</div>
@@ -584,92 +834,112 @@
                 </div>
                 <div class="stat-box">
                     <div class="stat-value">${state.racers.length}</div>
-                    <div class="stat-label">Racers</div>
+                    <div class="stat-label">Cars</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">${leader ? leader.points : 0}</div>
-                    <div class="stat-label">Top Points</div>
+                    <div class="stat-value">${fastestTime ? fastestTime.toFixed(3) : '--'}</div>
+                    <div class="stat-label">Fastest Time</div>
                 </div>
             `;
 
             if (leaderboard.length === 0) {
-                container.innerHTML = '<div class="empty">No racers yet</div>';
+                container.innerHTML = '<div class="empty">No races logged yet</div>';
                 return;
             }
 
+            const showDropWorst = currentSort === 'avgDropWorst';
+
             container.innerHTML = leaderboard.map((racer, idx) => {
                 const rankClass = idx < 3 ? `rank-${idx + 1}` : 'rank-other';
-                const isMyCar = racer.name === state.myCar;
+                const isMyCar = racer.number === state.myCar;
+                const displayTime = showDropWorst ? racer.avgDropWorst : racer.avgTime;
                 return `
                     <div class="leaderboard-item ${isMyCar ? 'my-car' : ''}">
                         <div class="rank ${rankClass}">${idx + 1}</div>
                         <div class="racer-info">
-                            <div class="racer-name">${isMyCar ? '<span class="star">★</span> ' : ''}${racer.name}</div>
+                            <div class="racer-name">${isMyCar ? '<span class="star">★</span> ' : ''}${racer.displayName}</div>
                             <div class="racer-stats">
                                 ${racer.points} pts · ${racer.races} races ·
                                 🥇${racer.firsts} 🥈${racer.seconds} 🥉${racer.thirds}
                             </div>
                         </div>
-                        <div class="racer-avg">${racer.avg}</div>
+                        <div class="racer-times">
+                            <div class="racer-avg-time">${displayTime ? displayTime.toFixed(3) + 's' : '--'}</div>
+                            <div class="racer-best-time">best: ${racer.bestTime ? racer.bestTime.toFixed(3) + 's' : '--'}</div>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Render history
         function renderHistory() {
             const container = document.getElementById('historyList');
             const filterContainer = document.getElementById('trackFilter');
 
-            // Track filter
             filterContainer.innerHTML = `
-                <button class="track-btn active" data-track="all">All</button>
-                ${[1,2,3,4,5,6].map(t =>
-                    `<button class="track-btn" data-track="${t}">T${t}</button>`
-                ).join('')}
+                <button class="track-btn ${historyFilter === 'all' ? 'active' : ''}" data-filter="all">All</button>
+                <button class="track-btn ${historyFilter === 'mine' ? 'active' : ''}" data-filter="mine">My Races</button>
             `;
 
             filterContainer.querySelectorAll('.track-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     filterContainer.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    renderRaces(btn.dataset.track);
+                    historyFilter = btn.dataset.filter;
+                    renderRaces();
                 });
             });
 
-            renderRaces('all');
+            renderRaces();
         }
 
-        function renderRaces(trackFilter) {
+        function renderRaces() {
             const container = document.getElementById('historyList');
             let races = [...state.races].reverse();
 
-            if (trackFilter !== 'all') {
-                races = races.filter(r => r.track === parseInt(trackFilter));
+            if (historyFilter === 'mine' && state.myCar) {
+                races = races.filter(r => r.places.includes(state.myCar));
             }
 
             if (races.length === 0) {
-                container.innerHTML = '<div class="empty">No races logged yet</div>';
+                if (historyFilter === 'mine') {
+                    container.innerHTML = '<div class="empty">No races found for your car</div>';
+                } else {
+                    container.innerHTML = '<div class="empty">No races logged yet</div>';
+                }
                 return;
             }
 
-            container.innerHTML = races.map(race => `
-                <div class="race-item">
-                    <div class="race-header">
-                        <span class="race-number">Race #${race.race}</span>
-                        <span class="race-track">Track ${race.track}</span>
-                        <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
+            container.innerHTML = races.map(race => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const resultsHtml = race.places.map((carNum, idx) => {
+                    const medal = medals[idx] || `${idx + 1}.`;
+                    const lane = race.lanes ? race.lanes[idx] : null;
+                    const isMyCar = carNum === state.myCar;
+                    return `
+                        <span class="race-place ${isMyCar ? 'my-car' : ''}">
+                            <span class="medal">${medal}</span>
+                            ${getDisplayName(carNum)}
+                            ${lane ? `<span class="lane-num">(L${lane})</span>` : ''}
+                            <span class="time">${formatTime(race.times?.[idx])}</span>
+                        </span>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="race-item">
+                        <div class="race-header">
+                            <span class="race-number">Race #${race.race}</span>
+                            <button class="delete-race" onclick="deleteRace(${race.id})">×</button>
+                        </div>
+                        <div class="race-results">
+                            ${resultsHtml}
+                        </div>
                     </div>
-                    <div class="race-results">
-                        ${race.places[0] ? `<span class="race-place"><span class="medal">🥇</span> ${race.places[0]}</span>` : ''}
-                        ${race.places[1] ? `<span class="race-place"><span class="medal">🥈</span> ${race.places[1]}</span>` : ''}
-                        ${race.places[2] ? `<span class="race-place"><span class="medal">🥉</span> ${race.places[2]}</span>` : ''}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // Delete race
         function deleteRace(id) {
             if (confirm('Delete this race?')) {
                 state.races = state.races.filter(r => r.id !== id);
@@ -678,59 +948,54 @@
             }
         }
 
-        // Render racers
         function renderRacers() {
             const container = document.getElementById('racersList');
 
             if (state.racers.length === 0) {
-                container.innerHTML = '<div class="empty">No racers yet. Add some above!</div>';
+                container.innerHTML = '<div class="empty">No cars yet. Generate a range above!</div>';
                 return;
             }
 
-            container.innerHTML = state.racers.map(racer => `
-                <span class="racer-chip">
-                    ${racer === state.myCar ? '<span class="star">★</span>' : ''}
-                    ${racer}
-                    <button onclick="deleteRacer('${racer.replace(/'/g, "\\'")}')">×</button>
-                </span>
+            const sortedRacers = [...state.racers].sort((a, b) => a.number - b.number);
+
+            container.innerHTML = sortedRacers.map(racer => `
+                <div class="racer-row ${racer.number === state.myCar ? 'my-car' : ''}">
+                    <span class="racer-num">${racer.number === state.myCar ? '<span class="star">★</span> ' : ''}#${racer.number}</span>
+                    <input type="text"
+                           value="${racer.name || ''}"
+                           placeholder="Add name..."
+                           onchange="updateRacerName(${racer.number}, this.value)">
+                    <button onclick="deleteRacer(${racer.number})">×</button>
+                </div>
             `).join('');
         }
 
-        // Add racer
-        function addRacer() {
-            const input = document.getElementById('newRacerName');
-            const name = input.value.trim();
-
-            if (!name) return;
-            if (state.racers.includes(name)) {
-                alert('Racer already exists!');
-                return;
-            }
-
-            state.racers.push(name);
-            saveState();
-            input.value = '';
-            renderAll();
-        }
-
-        // Delete racer
-        function deleteRacer(name) {
-            if (confirm(`Delete ${name}? This won't remove them from past races.`)) {
-                state.racers = state.racers.filter(r => r !== name);
-                if (state.myCar === name) state.myCar = null;
+        function updateRacerName(carNum, name) {
+            const racer = state.racers.find(r => r.number === carNum);
+            if (racer) {
+                racer.name = name.trim();
                 saveState();
                 renderAll();
             }
         }
 
-        // Set my car
+        function deleteRacer(carNum) {
+            const display = getDisplayName(carNum);
+            if (confirm(`Delete ${display}? This won't remove them from past races.`)) {
+                state.racers = state.racers.filter(r => r.number !== carNum);
+                if (state.myCar === carNum) state.myCar = null;
+                saveState();
+                renderAll();
+            }
+        }
+
         function setMyCar() {
-            state.myCar = document.getElementById('myCarSelect').value || null;
+            const val = document.getElementById('myCarSelect').value;
+            state.myCar = val ? parseInt(val) : null;
             saveState();
             renderAll();
         }
 
-        // Export data
         function exportData() {
             const data = JSON.stringify(state, null, 2);
             const blob = new Blob([data], { type: 'application/json' });
@@ -741,7 +1006,6 @@
             a.click();
         }
 
-        // Import data
         function importData() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -764,7 +1028,6 @@
             input.click();
         }
 
-        // Clear all data
         function clearAllData() {
             if (confirm('Clear ALL data? This cannot be undone!')) {
                 state = { racers: [], races: [], myCar: null };
@@ -773,26 +1036,19 @@
             }
         }
 
-        // Render all
         function renderAll() {
+            renderLaneInputs();
             populateRacerSelects();
             renderLeaderboard();
             renderHistory();
             renderRacers();
 
-            // Update race number to next
             if (state.races.length > 0) {
                 const maxRace = Math.max(...state.races.map(r => r.race));
                 document.getElementById('raceNumber').value = maxRace + 1;
             }
         }
 
-        // Handle Enter key for adding racers
-        document.getElementById('newRacerName').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addRacer();
-        });
-
-        // Initialize
         loadState();
         renderAll();
     </script>
